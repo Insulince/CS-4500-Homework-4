@@ -5,6 +5,10 @@
 <html>
 <head>
     <title>A Pretty Strange Game</title>
+
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
     <style>
         .divider {
             text-align: center;
@@ -142,6 +146,31 @@
 
         "use strict"; //Strict mode used for better debugging and coding standards.
 
+        google.charts.load('current', {'packages': ['corechart', 'bar']});
+        google.charts.setOnLoadCallback(drawChart);
+
+        function drawChart(averageTotalMoveForNotHyper = 0, averageTotalMovesForHyper = 0) {
+            let data = new google.visualization.DataTable();
+
+            data.addColumn('string', 'Hyper or Not');
+            data.addColumn('number', 'Average Total Moves');
+
+            data.addRows(
+                [
+                    [
+                        "Not Hyper",
+                        averageTotalMoveForNotHyper
+                    ],
+                    [
+                        "Hyper",
+                        averageTotalMovesForHyper
+                    ]
+                ]
+            );
+
+            new google.charts.Bar(document.getElementById('graph')).draw(data);
+        }
+
         //CONSTANTS.
         //There are so many constants because these are the things I would put in a config file for easy tweaking of the parameters of the program.
 
@@ -159,6 +188,7 @@
         };
         const EMPTY_GAME = {
             "parameters": {
+                "hyper": undefined,
                 "speed": undefined,
                 "rowQuantity": undefined,
                 "columnQuantity": undefined
@@ -179,10 +209,24 @@
                 "totalTouches": undefined
             }
         };
+        const EMPTY_EXPERIMENT = {
+            "trials": [],
+            "parameters": {
+                "quantityTrials": {
+                    "notHyper": undefined,
+                    "hyper": undefined
+                }
+            }
+        };
+        const EMPTY_TRIAL = {
+            "independentVariableValue": undefined,
+            "dependentVariableValue": undefined,
+            "game": undefined
+        };
 
         //Grid specifications.
-        const DEFAULT_ROW_QUANTITY = 10;
-        const DEFAULT_COLUMN_QUANTITY = 10;
+        const DEFAULT_ROW_QUANTITY = 9;
+        const DEFAULT_COLUMN_QUANTITY = 9;
 
         const MAXIMUM_TOUCHES_ALLOWED = 1000000;
 
@@ -212,6 +256,9 @@
         const GAME_SUCCESS_MESSAGE = "The marker is now in the correct position.";
         const GAME_FAILURE_MESSAGE = "The game surpassed the maximum amount of turns allowed and failed to push the marker to the correct position.";
 
+        //The global experiment object.
+        let experiment = deepCopy(EMPTY_EXPERIMENT);
+
         //The global game object.
         let game = undefined;
 
@@ -225,18 +272,32 @@
          * Output: None.
          * Assumptions: None. */
         function playNewGame() {
-            if (validParameters()) {
-                resetGame();
-                collectParameters();
-                buildGrid();
-                setupGame();
-                playGame().then(
-                    () => {
-                        calculateResults();
-                        printResults();
+            return new Promise(
+                (resolve, reject) => {
+                    if (validParameters()) {
+                        resetGame();
+                        collectParameters();
+                        buildGrid();
+                        setupGame();
+                        playGame().then(
+                            () => {
+                                calculateResults();
+                                printResults();
+
+                                let trial = deepCopy(EMPTY_TRIAL);
+                                trial.independentVariableValue = "Not Hyper";
+                                trial.dependentVariableValue = game.results.totalTouches;
+                                trial.game = deepCopy(game);
+                                experiment.trials.push(trial);
+                                resolve();
+                            },
+                            (error) => {
+                                reject(error);
+                            }
+                        );
                     }
-                );
-            }
+                }
+            );
         }
 
         /* Purpose: Determine if the parameters the user entered are valid.
@@ -279,9 +340,14 @@
          * Output: None.
          * Assumptions: The game object has been populated with a deep copy of "EMPTY_GAME". */
         function collectParameters() {
+            game.parameters.hyper = getHyperParameter();
             game.parameters.speed = getSpeedParameter();
             game.parameters.rowQuantity = getRowQuantityParameter();
             game.parameters.columnQuantity = getColumnQuantityParameter();
+        }
+
+        function getHyperParameter() {
+            return $("#hyper").is(":checked");
         }
 
         /* Purpose: Gets the value in the speed input box.
@@ -378,7 +444,7 @@
         function setupGame() {
             createGrid(game.parameters.rowQuantity, game.parameters.columnQuantity);
             resetResults();
-            placeMarkerAndRecordTouchAt(game.parameters.rowQuantity - 1, 0);
+            placeMarkerAndRecordTouchAt(0, 0);
         }
 
         /* Purpose: Resets the results table to the initial settings of the first frame of a running game.
@@ -621,7 +687,7 @@
          * Output: A boolean indicating whether the marker is in the winning row or not.
          * Assumptions: #A. */
         function markerIsInWinningRow() {
-            return game.marker.position.row === 0;
+            return game.marker.position.row === 4;
         }
 
         /* Purpose: Determines whether the marker is in the winning column or not.
@@ -629,7 +695,7 @@
          * Output: A boolean indicating whether the marker is in the winning column or not.
          * Assumptions: #A. */
         function markerIsInWinningColumn() {
-            return game.marker.position.column === game.parameters.columnQuantity - 1;
+            return game.marker.position.column === 4;
         }
 
         /* Purpose: Determines whether the game has surpassed the maximum amount of touches or not.
@@ -648,17 +714,21 @@
             let move = generateRandomMove();
             let originalMarkerLocation = deepCopy(game.marker.position);
 
-            if (thisMoveDoesNotPutMarkerOutsideOfGrid(move)) {
-                placeMarkerAtPositionFromMove(move);
-                updateLastMoveDescriptionTable(move, true);
-                calculateRunningResults();
-                printRunningResults();
+            if (!game.parameters.hyper) {
+                if (thisMoveDoesNotPutMarkerOutsideOfGrid(move)) {
+                    placeMarkerAtPositionFromMove(move);
+                    updateLastMoveDescriptionTable(move, true);
+                } else {
+                    placeMarkerAtOriginalLocation(originalMarkerLocation);
+                    updateLastMoveDescriptionTable(move, false);
+                }
             } else {
-                placeMarkerAtOriginalLocation(originalMarkerLocation);
+                placeMarkerAtHyperPositionFromMove(move);
                 updateLastMoveDescriptionTable(move, false);
-                calculateRunningResults();
-                printRunningResults();
             }
+
+            calculateRunningResults();
+            printRunningResults();
         }
 
         /* Purpose: Update the last move description table with details about the last move.
@@ -709,7 +779,6 @@
                     return "Down";
                     break;
             }
-
         }
 
         /* Purpose: Creates a random move to apply to the marker.
@@ -831,6 +900,49 @@
             return markerPositionAfterThisMove;
         }
 
+        function getMarkerPositionAfterThisHyperMove(move) {
+            let markerPositionAfterThisMove = deepCopy(EMPTY_POSITION);
+
+            switch (move.direction) {
+                case DIRECTION_LEFT: //If the move direction is up...
+                    markerPositionAfterThisMove.row = game.marker.position.row;
+                    if (game.marker.position.column - getMoveDistance(move) >= 0) {
+                        markerPositionAfterThisMove.column = game.marker.position.column - getMoveDistance(move); //Subtract across the columns to go left.
+                    } else {
+                        markerPositionAfterThisMove.column = game.parameters.columnQuantity - Math.abs(game.marker.position.column - getMoveDistance(move));
+                    }
+                    break;
+                case DIRECTION_UP: //If the move direction is left...
+                    if (game.marker.position.row - getMoveDistance(move) >= 0) {
+                        markerPositionAfterThisMove.row = game.marker.position.row - getMoveDistance(move); //Subtract across the rows to go up.
+                    } else {
+                        markerPositionAfterThisMove.row = game.parameters.rowQuantity - Math.abs(game.marker.position.row - getMoveDistance(move));
+                    }
+                    markerPositionAfterThisMove.column = game.marker.position.column;
+                    break;
+                case DIRECTION_RIGHT: //If the move direction is down...
+                    markerPositionAfterThisMove.row = game.marker.position.row;
+                    if (game.marker.position.column + getMoveDistance(move) < game.parameters.columnQuantity) {
+                        markerPositionAfterThisMove.column = game.marker.position.column + getMoveDistance(move); //Advance across the columns to go right.
+                    } else {
+                        markerPositionAfterThisMove.column = game.marker.position.column + getMoveDistance(move) - game.parameters.columnQuantity;
+                    }
+                    break;
+                case DIRECTION_DOWN: //If the move direction is right...
+                    if (game.marker.position.row + getMoveDistance(move) < game.parameters.rowQuantity) {
+                        markerPositionAfterThisMove.row = game.marker.position.row + getMoveDistance(move); //Advance across the rows to go down.
+                    } else {
+                        markerPositionAfterThisMove.row = game.marker.position.row + getMoveDistance(move) - game.parameters.rowQuantity;
+                    }
+                    markerPositionAfterThisMove.column = game.marker.position.column;
+                    break;
+                default:
+                    throw new Error("Unrecognized move direction encountered: \"" + move.direction + "\".");
+            }
+
+            return markerPositionAfterThisMove;
+        }
+
         /* Purpose: Gets the distance as a number represented in the provided move object.
          * Inputs: "move" - The move object containing both a direction and a distance.
          * Output: The distance as an integer that the move object contains.
@@ -861,6 +973,11 @@
          * Assumptions: #B. The function "getMarkerPositionAfterThisMove" returns a valid position object, resembling the object described in #C. */
         function placeMarkerAtPositionFromMove(move) {
             let newMarkerPosition = getMarkerPositionAfterThisMove(move);
+            placeMarkerAndRecordTouchAt(newMarkerPosition.row, newMarkerPosition.column);
+        }
+
+        function placeMarkerAtHyperPositionFromMove(move) {
+            let newMarkerPosition = getMarkerPositionAfterThisHyperMove(move);
             placeMarkerAndRecordTouchAt(newMarkerPosition.row, newMarkerPosition.column);
         }
 
@@ -1075,6 +1192,31 @@
                     </table>
             `;
         }
+
+        function doExperiment() {
+            playNewGame().then(
+                () => {
+                    if (experiment.trials.length < 1000) {
+                        doExperiment();
+
+                        let x = 0;
+                        experiment.trials.forEach(
+                            (trial) => {
+                                x += trial.dependentVariableValue;
+                            }
+                        );
+
+                        console.log(x);
+                        console.log(experiment.trials.length);
+                        console.log(x / experiment.trials.length);
+
+                        drawChart(x / experiment.trials.length, 0);
+                    } else {
+                        //TODO
+                    }
+                }
+            );
+        }
     </script>
 </head>
 <body>
@@ -1087,6 +1229,12 @@
                 <th>Value</th>
             </tr>
             <tr>
+                <td>Hyper</td>
+                <td>
+                    <input id="hyper" class="parameter-input" type="checkbox"/>
+                </td>
+            </tr>
+            <tr>
                 <td>Speed</td>
                 <td>
                     <input id="speed" class="parameter-input" type="number" min="1" value="250"/>
@@ -1095,13 +1243,13 @@
             <tr>
                 <td>Row Quantity</td>
                 <td>
-                    <input id="row-quantity" class="parameter-input" type="number" min="5" max="20" value="10"/>
+                    <input id="row-quantity" class="parameter-input" type="number" min="5" max="20" value="9"/>
                 </td>
             </tr>
             <tr>
                 <td>Column Quantity</td>
                 <td>
-                    <input id="column-quantity" class="parameter-input" type="number" min="5" max="20" value="10"/>
+                    <input id="column-quantity" class="parameter-input" type="number" min="5" max="20" value="9"/>
                 </td>
             </tr>
         </table>
@@ -1170,5 +1318,9 @@
         </div>
     </div>
 </div>
+
+<div id="graph"></div>
+<button onclick="drawChart()">drawChart</button>
+<button onclick="doExperiment()">Do Experiment</button>
 </body>
 </html>
