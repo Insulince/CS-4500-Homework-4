@@ -1,4 +1,4 @@
-<!-- Charles Justin Reusnow • 1 September 2017 • CMP SCI 4500 • Homework 2 -->
+<!-- Charles Justin Reusnow • 25 September 2017 • CMP SCI 4500 • Homework 4 -->
 <!-- You can find my opening comment at the beginning of the script tag in the head of the HTML document described below. -->
 
 <!DOCTYPE html>
@@ -6,126 +6,26 @@
 <head>
     <title>A Pretty Strange Game</title>
 
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 
     <style>
-        .divider {
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        .panel {
-            background-color: #dddddd;
-            border: 3px solid black;
-            text-align: center;
-            font-family: Consolas, serif;
-            margin-left: auto;
-            margin-right: auto;
-            padding: 15px;
-            display: inline-block;
-        }
-
-        .panel-title {
-            margin: 0 0 10px;
-        }
-
-        .panel-subtitle {
-            margin: 20px 0 10px;
-        }
-
-        #game-board {
-            border: solid 1px black;
-        }
-
-        .row {
-            margin: 0;
-            padding: 0;
-            line-height: 0;
-        }
-
-        .column {
-            padding: 0;
-            margin: 0;
-            line-height: 0;
-            min-height: 34px;
-            min-width: 34px;
-            border: solid 1px black;
-            display: inline-block;
-        }
-
-        .column-even-even, .column-odd-odd {
-            background-color: #888888;
-        }
-
-        .column-even-odd, .column-odd-even {
-            background-color: #e7e7e7;
-        }
-
-        #marker {
-            position: relative;
-            top: 0;
-            left: 0;
-            margin: 0;
-            padding: 0;
-            width: 32px;
-            height: 32px;
-            border: solid darkred 1px;
-            border-radius: 50%;
-            background-color: red;
-        }
-
-        .marker-off {
-            position: relative;
-            top: 0;
-            left: 0;
-            margin: 0;
-            padding: 0;
-            width: 32px;
-            height: 32px;
-            border: 1px solid rgba(0, 0, 0, 0);
-        }
-
-        .cell-content {
-            position: absolute;
-            top: 5px;
-            left: 2px;
-            margin: 0;
-            padding: 0;
-            font-size: 10px;
-            color: darkgrey;
-        }
-
-        #play-new-game-button {
-            padding: 16px 32px;
-            display: block;
-            font-size: 14px;
-            font-weight: bolder;
-            background-color: #bbbbbb;
-            border: 3px solid black;
-            margin-top: 20px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        #parameters-table, #parameters-table tr, #parameters-table tr th, #parameters-table tr td, #last-move-description-table, #last-move-description-table tr, #last-move-description-table tr th, #last-move-description-table tr td, #results-table, #results-table tr, #results-table tr th, #results-table tr td {
-            padding: 5px;
-            border: 3px solid black;
-            border-collapse: collapse;
-            background-color: #e7e7e7;
+        * {
+            font-family: monospace;
         }
 
         .center-me {
             text-align: center;
         }
 
-        .parameter-input {
-            width: 97%;
+        .no-margin {
+            margin: 0;
         }
     </style>
     <script>
-        //Charles Justin Reusnow • 1 September 2017 • CMP SCI 4500 • Homework 2
-        //My partner was Yehuda, however we did not discuss Homework 2 and instead spent all our time on the "blobs" in-class assignment.
+        //Charles Justin Reusnow • 25 September 2017 • CMP SCI 4500 • Homework 4
+        //My partners are, TODO however we did not discuss Homework 2 and instead spent all our time on the "blobs" in-class assignment.
 
         /* OPENING COMMENT.
          * The following code is my attempt to develop a solution to the specification provided in "Homework 2". I wrote it with modularity and clarity in mind, I believe I succeeded in these efforts because I found when skimming through the
@@ -147,28 +47,45 @@
         "use strict"; //Strict mode used for better debugging and coding standards.
 
         google.charts.load('current', {'packages': ['corechart', 'bar']});
-        google.charts.setOnLoadCallback(drawChart);
 
-        function drawChart(averageTotalMoveForNotHyper = 0, averageTotalMovesForHyper = 0) {
+        function drawChart(container, averageTotalTouchesForNotHyper, averageTotalTouchesForHyper) {
             let data = new google.visualization.DataTable();
 
             data.addColumn('string', 'Hyper or Not');
-            data.addColumn('number', 'Average Total Moves');
+            data.addColumn('number', 'Average Total Touches');
 
             data.addRows(
                 [
                     [
                         "Not Hyper",
-                        averageTotalMoveForNotHyper
+                        averageTotalTouchesForNotHyper
                     ],
                     [
                         "Hyper",
-                        averageTotalMovesForHyper
+                        averageTotalTouchesForHyper
                     ]
                 ]
             );
 
-            new google.charts.Bar(document.getElementById('graph')).draw(data);
+            let options = {
+                height: 200,
+                legend: {
+                    position: "none"
+                }
+            };
+
+            new google.charts.Bar(document.getElementById(container)).draw(data, options);
+
+            let row = (experiment.parameters.numRows - 3) / 2;
+            let col = (experiment.parameters.numCols - 3) / 2;
+
+            console.log("row-" + row + "-col-" + col + "-results");
+
+            document.getElementById("row-" + row + "-col-" + col + "-results").innerHTML = `
+                <p>Average total touches for Non-Hyper grid: ` + averageTotalTouchesForNotHyper + `</p>
+                <p>Average total touches for Hyper grid: ` + averageTotalTouchesForHyper + `</p>
+                <p>The Hyper grid took ` + (averageTotalTouchesForHyper >= averageTotalTouchesForNotHyper ? "more or just as many" : "less") + ` total touches on average than the Non-Hyper grid.</p>
+            `;
         }
 
         //CONSTANTS.
@@ -189,9 +106,9 @@
         const EMPTY_GAME = {
             "parameters": {
                 "hyper": undefined,
-                "speed": undefined,
                 "rowQuantity": undefined,
-                "columnQuantity": undefined
+                "columnQuantity": undefined,
+                "winningPositionIsAtBottomRightCorner": undefined
             },
             "grid": undefined,
             "marker": {
@@ -215,22 +132,21 @@
                 "quantityTrials": {
                     "notHyper": undefined,
                     "hyper": undefined
-                }
+                },
+                "numRows": undefined,
+                "numCols": undefined,
+                "container": undefined
             }
         };
         const EMPTY_TRIAL = {
             "independentVariableValue": undefined,
-            "dependentVariableValue": undefined,
-            "game": undefined
+            "dependentVariableValue": undefined
         };
-
-        //Grid specifications.
-        const DEFAULT_ROW_QUANTITY = 9;
-        const DEFAULT_COLUMN_QUANTITY = 9;
 
         const MAXIMUM_TOUCHES_ALLOWED = 1000000;
 
-        const DEFAULT_SPEED = 100;
+        const NOT_HYPER = false;
+        const HYPER = true;
 
         //ENUMS.
         //Direction Enum.
@@ -252,18 +168,11 @@
         const GAME_SUCCESS = true;
         const GAME_FAILURE = false;
 
-        //End Game Messages.
-        const GAME_SUCCESS_MESSAGE = "The marker is now in the correct position.";
-        const GAME_FAILURE_MESSAGE = "The game surpassed the maximum amount of turns allowed and failed to push the marker to the correct position.";
-
         //The global experiment object.
-        let experiment = deepCopy(EMPTY_EXPERIMENT);
+        let experiment = undefined;
 
         //The global game object.
         let game = undefined;
-
-        //The global interval for running the game.
-        let interval = undefined;
 
         resetGame();
 
@@ -271,143 +180,16 @@
          * Inputs: None.
          * Output: None.
          * Assumptions: None. */
-        function playNewGame() {
-            return new Promise(
-                (resolve, reject) => {
-                    if (validParameters()) {
-                        resetGame();
-                        collectParameters();
-                        buildGrid();
-                        setupGame();
-                        playGame().then(
-                            () => {
-                                calculateResults();
-                                printResults();
+        function playNewGame(hyper, parameters) {
+            resetGame();
+            setupGame(hyper, parameters);
+            playGame();
+            calculateResults();
 
-                                let trial = deepCopy(EMPTY_TRIAL);
-                                trial.independentVariableValue = "Not Hyper";
-                                trial.dependentVariableValue = game.results.totalTouches;
-                                trial.game = deepCopy(game);
-                                experiment.trials.push(trial);
-                                resolve();
-                            },
-                            (error) => {
-                                reject(error);
-                            }
-                        );
-                    }
-                }
-            );
-        }
-
-        /* Purpose: Determine if the parameters the user entered are valid.
-         * Inputs: None.
-         * Output: A boolean indicating whether the parameters the user entered are valid.
-         * Assumptions: None. */
-        function validParameters() {
-            let inputErrors = [];
-            try {
-                let potentialSpeedParameter = getSpeedParameter();
-                let potentialRowQuantityParameter = getRowQuantityParameter();
-                let potentialColumnQuantityParameter = getColumnQuantityParameter();
-
-                if (potentialSpeedParameter <= 0) {
-                    inputErrors.push("Speed must be an integer greater than 0!");
-                }
-                if (potentialRowQuantityParameter < 5 || potentialRowQuantityParameter > 20) {
-                    inputErrors.push("Row Quantity must be an integer greater than 4 and less than 21!");
-                }
-                if (potentialColumnQuantityParameter < 5 || potentialColumnQuantityParameter > 20) {
-                    inputErrors.push("Column Quantity must be an integer greater than 4 and less than 21!");
-                }
-
-                if (inputErrors.length > 0) {
-                    let errorMessage = "Could not play a new game, your parameters have the following issues:\n- " + inputErrors.join("\n- ");
-
-                    alert(errorMessage);
-
-                    return false;
-                } else {
-                    return true;
-                }
-            } catch (e) {
-                alert("Your parameters are invalid!");
-            }
-        }
-
-        /* Purpose: Gathers all the parameters and stores them in the game.parameters object.
-         * Inputs: None.
-         * Output: None.
-         * Assumptions: The game object has been populated with a deep copy of "EMPTY_GAME". */
-        function collectParameters() {
-            game.parameters.hyper = getHyperParameter();
-            game.parameters.speed = getSpeedParameter();
-            game.parameters.rowQuantity = getRowQuantityParameter();
-            game.parameters.columnQuantity = getColumnQuantityParameter();
-        }
-
-        function getHyperParameter() {
-            return $("#hyper").is(":checked");
-        }
-
-        /* Purpose: Gets the value in the speed input box.
-         * Inputs: None.
-         * Output: The value in the speed input box.
-         * Assumptions: The value returned from getInputValue is a number. */
-        function getSpeedParameter() {
-            return parseInt(getInputValue("speed"));
-        }
-
-        /* Purpose: Gets the value in the row quantity input box.
-         * Inputs: None.
-         * Output: The value in the row quantity input box.
-         * Assumptions: The value returned from getInputValue is a number. */
-        function getRowQuantityParameter() {
-            return parseInt(getInputValue("row-quantity"));
-        }
-
-        /* Purpose: Gets the value in the column quantity input box.
-         * Inputs: None.
-         * Output: The value in the column quantity input box.
-         * Assumptions: The value returned from getInputValue is a number. */
-        function getColumnQuantityParameter() {
-            return parseInt(getInputValue("column-quantity"));
-        }
-
-        /* Purpose: Gets the value in an HTML element with the provided id.
-         * Inputs: "id" - The id of the HTML element with which to fetch a value from.
-         * Output: The value of the HTML element.
-         * Assumptions: An HTML element with the provided id exists and has a value. */
-        function getInputValue(id) {
-            let elementValue = document.getElementById(id).value;
-
-            if (elementValue) {
-                return elementValue;
-            } else {
-                throw new Error("Your parameters are invalid!");
-            }
-        }
-
-        /* Purpose:To construct the graphical grid and put it on the page.
-         * Inputs: None.
-         * Output: None.
-         * Assumptions: An HTML element with the id "game-board-wrapper" exists. The function "collectParameters" has already executed successfully. */
-        function buildGrid() {
-            let content = "<div id=\"game-board\">";
-            for (let i = 0; i < game.parameters.rowQuantity; i++) {
-                content += "<div id=\"row-" + i + "\" class=\"row\">";
-
-                for (let j = 0; j < game.parameters.columnQuantity; j++) {
-                    let columnClass = "column-" + (i % 2 === 0 ? "even" : "odd") + "-" + (j % 2 === 0 ? "even" : "odd");
-
-                    content += "<div id=\"column-" + i + "-" + j + "\" class=\"column " + columnClass + "\"><div class='marker-off'><p class='cell-content'>0</p></div></div>";
-                }
-
-                content += "</div>";
-            }
-            content += "</div>";
-
-            document.getElementById("game-board-wrapper").innerHTML = content;
+            let trial = deepCopy(EMPTY_TRIAL);
+            trial.independentVariableValue = hyper === true ? "Hyper" : "Not Hyper";
+            trial.dependentVariableValue = game.results.totalTouches;
+            experiment.trials.push(trial);
         }
 
         /* Purpose: Ensures the game always starts as a fresh game with no previous values carried over.
@@ -416,17 +198,6 @@
          * Assumptions: None. */
         function resetGame() {
             game = deepCopy(EMPTY_GAME);
-            resetInterval();
-        }
-
-        /* Purpose: Clears the interval so that each time you start a new game the previous interval isn't carried over.
-         * Inputs: None.
-         * Output: None
-         * Assumptions: None. */
-        function resetInterval() {
-            if (interval) {
-                clearInterval(interval);
-            }
         }
 
         /* Purpose: Takes an object and copies it to a brand new object to avoid passing by reference. This is accomplished by turning the object into a JSON string and then bringing it back to an object, thereby removing any references to a previous object.
@@ -441,45 +212,14 @@
          * Inputs: None.
          * Output: None.
          * Assumptions: The function "resetGame" was already called. */
-        function setupGame() {
-            createGrid(game.parameters.rowQuantity, game.parameters.columnQuantity);
-            resetResults();
-            placeMarkerAndRecordTouchAt(0, 0);
-        }
+        function setupGame(hyper, parameters) {
+            game.parameters.hyper = hyper;
+            game.parameters.rowQuantity = parameters.numRows;
+            game.parameters.columnQuantity = parameters.numCols;
+            game.parameters.winningPositionIsAtBottomRightCorner = parameters.winningPositionIsAtBottomRightCorner;
 
-        /* Purpose: Resets the results table to the initial settings of the first frame of a running game.
-         * Inputs: None.
-         * Output: None.
-         * Assumptions: #A. */
-        function resetResults() {
-            document.getElementById("results").innerHTML = `
-                    <table id="results-table" class="center-me" align="center">
-                        <tr>
-                            <th>Type</th>
-                            <th>Value</th>
-                        </tr>
-                        <tr>
-                            <td>Outcome</td>
-                            <td>Game is running...</td>
-                        </tr>
-                        <tr>
-                            <td>Maximum Touches in a Cell</td>
-                            <td>1</td>
-                        </tr>
-                        <tr>
-                            <td>Minimum Touches in a Cell</td>
-                            <td>0</td>
-                        </tr>
-                        <tr>
-                            <td>Average Touches per Cell</td>
-                            <td>` + (1 / (game.parameters.rowQuantity * game.parameters.columnQuantity)).toFixed(2) + `</td>
-                        </tr>
-                        <tr>
-                            <td>Total Touches</td>
-                            <td>1</td>
-                        </tr>
-                    </table>
-            `;
+            createGrid(game.parameters.rowQuantity, game.parameters.columnQuantity);
+            placeMarkerAndRecordTouchAt(0, 0);
         }
 
         /* Purpose: Creates the grid for the game.
@@ -560,49 +300,8 @@
          * Output: None.
          * Assumptions: Inputs are all whole numbers. */
         function placeMarkerAt(row, column) {
-            updateMarkerOnGrid(row, column);
-
             game.marker.position.row = row;
             game.marker.position.column = column;
-        }
-
-        /* Purpose: Updates the markers graphical position on the grid.
-         * Inputs:
-         * • "row" - The row to update the marker's position to.
-         * • "column" - The column to update the marker's position to.
-         * Output: None.
-         * Assumptions: */
-        function updateMarkerOnGrid(row, column) {
-            removeMarkerFromGrid();
-            placeMarkerOnGridAt(row, column);
-        }
-
-        /* Purpose: Deletes the marker from the graphical grid.
-         * Inputs: None.
-         * Output: None.
-         * Assumptions: #A. An HTML element with id "column-i-j" exists where i and j are the markers current row and column, respectively. Marker is actually on the grid. */
-        function removeMarkerFromGrid() {
-            if (markerIsOnGrid()) {
-                document.getElementById("column-" + game.marker.position.row + "-" + game.marker.position.column).innerHTML = "<div class=\"marker-off\"><p class=\"cell-content\">" + game.grid[game.marker.position.row][game.marker.position.column] + "</p></div>";
-            }
-        }
-
-        /* Purpose: Determine if the marker is currently on the graphical grid.
-         * Inputs: None.
-         * Output: A boolean indicating whether the marker is currently on the graphical grid.
-         * Assumptions: #A. */
-        function markerIsOnGrid() {
-            return game.marker.position.row !== undefined && game.marker.position.column !== undefined;
-        }
-
-        /* Purpose: Put the marker on the graphical grid at the provided locaiton.
-         * Inputs:
-         * • "row" - The row to place the marker at.
-         * • "column" - The column to place the marker at.
-         * Output: None.
-         * Assumptions: #A. An HTML element with id "column-i-j" exists where i and j are the provided row and column, respectively. */
-        function placeMarkerOnGridAt(row, column) {
-            document.getElementById("column-" + row + "-" + column).innerHTML = "<div id=\"marker\"><p class='cell-content'>" + (game.grid[row][column] + 1) + "</p></div>";
         }
 
         /* Purpose: Records the touch at the provided row and column, and also in the running total.
@@ -639,23 +338,9 @@
          * Output: None.
          * Assumptions: #A. */
         function playGame() {
-            //I use a promise here because I am running a process for an indefinite amount of time and the statements following it in the calling function need to wait until completion.
-            //This is not traditional JavaScript because it is now an asynchronous process and as such, I need a way to signify when the async code is completed. This is the purpose of the promise.
-            return new Promise(
-                (resolve, reject) => {
-                    interval = setInterval(
-                        () => {
-                            if (shouldContinuePlayingGame()) {
-                                continuePlayingGame();
-                            } else {
-                                clearInterval(interval);
-                                resolve();
-                            }
-                        },
-                        game.parameters.speed
-                    )
-                }
-            )
+            while (shouldContinuePlayingGame()) {
+                continuePlayingGame();
+            }
         }
 
         /* Purpose: Determines whether the game is over or if it should continue playing. This is determined by checking if the win condition (marker is in winning position) or lose condition (too many moves) has been met.
@@ -687,7 +372,11 @@
          * Output: A boolean indicating whether the marker is in the winning row or not.
          * Assumptions: #A. */
         function markerIsInWinningRow() {
-            return game.marker.position.row === 4;
+            if (game.parameters.winningPositionIsAtBottomRightCorner) {
+                return game.marker.position.row === game.parameters.rowQuantity - 1;
+            } else {
+                return game.marker.position.row === Math.floor(game.parameters.rowQuantity / 2);
+            }
         }
 
         /* Purpose: Determines whether the marker is in the winning column or not.
@@ -695,7 +384,11 @@
          * Output: A boolean indicating whether the marker is in the winning column or not.
          * Assumptions: #A. */
         function markerIsInWinningColumn() {
-            return game.marker.position.column === 4;
+            if (game.parameters.winningPositionIsAtBottomRightCorner) {
+                return game.marker.position.column === game.parameters.columnQuantity - 1;
+            } else {
+                return game.marker.position.column === Math.floor(game.parameters.columnQuantity / 2);
+            }
         }
 
         /* Purpose: Determines whether the game has surpassed the maximum amount of touches or not.
@@ -717,68 +410,14 @@
             if (!game.parameters.hyper) {
                 if (thisMoveDoesNotPutMarkerOutsideOfGrid(move)) {
                     placeMarkerAtPositionFromMove(move);
-                    updateLastMoveDescriptionTable(move, true);
                 } else {
                     placeMarkerAtOriginalLocation(originalMarkerLocation);
-                    updateLastMoveDescriptionTable(move, false);
                 }
             } else {
                 placeMarkerAtHyperPositionFromMove(move);
-                updateLastMoveDescriptionTable(move, false);
             }
 
             calculateRunningResults();
-            printRunningResults();
-        }
-
-        /* Purpose: Update the last move description table with details about the last move.
-         * Inputs:
-         * • "move" - The move object that was just applied on the marker.
-         * • "isValidMove" - Whether or not that move would've put the marker outside of the grid.
-         * Output: None.
-         * Assumptions: #B. An HTML element with id "last-move-description-wrapper" exists. */
-        function updateLastMoveDescriptionTable(move, isValidMove) {
-            document.getElementById("last-move-description-wrapper").innerHTML = `
-                 <table id="last-move-description-table" class="center-me" align="center">
-                    <tr>
-                        <th>Statistic</th>
-                        <th>Value</th>
-                    </tr>
-                    <tr>
-                        <td>Direction</td>
-                        <td>` + getMoveDirection(move) + `</td>
-                    </tr>
-                    <tr>
-                        <td>Distance</td>
-                        <td>` + getMoveDistance(move) + `</td>
-                    </tr>
-                    <tr>
-                        <td>Valid?</td>
-                        <td>` + isValidMove + `</td>
-                    </tr>
-                </table>
-            `;
-        }
-
-        /* Purpose:
-         * Inputs:
-         * Output:
-         * Assumptions: */
-        function getMoveDirection(move) {
-            switch (move.direction) {
-                case DIRECTION_LEFT:
-                    return "Left";
-                    break;
-                case DIRECTION_UP:
-                    return "Up";
-                    break;
-                case DIRECTION_RIGHT:
-                    return "Right";
-                    break;
-                case DIRECTION_DOWN:
-                    return "Down";
-                    break;
-            }
         }
 
         /* Purpose: Creates a random move to apply to the marker.
@@ -1001,41 +640,6 @@
             calculateTotalTouches();
         }
 
-        /* Purpose: Update the results table while the game is running.
-         * Inputs: None.
-         * Output: None.
-         * Assumptions: #A. An HTML element with id "results" exists. */
-        function printRunningResults() {
-            document.getElementById("results").innerHTML = `
-                    <table id="results-table" class="center-me" align="center">
-                        <tr>
-                            <th>Type</th>
-                            <th>Value</th>
-                        </tr>
-                        <tr>
-                            <td>Outcome</td>
-                            <td>Game is running...</td>
-                        </tr>
-                        <tr>
-                            <td>Maximum Touches in a Cell</td>
-                            <td>` + game.results.maximumTouches + `</td>
-                        </tr>
-                        <tr>
-                            <td>Minimum Touches in a Cell</td>
-                            <td>` + game.results.minimumTouches + `</td>
-                        </tr>
-                        <tr>
-                            <td>Average Touches per Cell</td>
-                            <td>` + game.results.averageTouchesPerCell + `</td>
-                        </tr>
-                        <tr>
-                            <td>Total Touches</td>
-                            <td>` + game.results.totalTouches + `</td>
-                        </tr>
-                    </table>
-            `;
-        }
-
         /* Purpose: To calculate the running results (does not calculate the game's outcome, because it's still running).
          * Inputs: None.
          * Output: None.
@@ -1157,170 +761,169 @@
             game.results.totalTouches = game.touches;
         }
 
-        /* Purpose: Writes the results of the game to the document inside the results wrapper.
-         * Inputs: None.
-         * Output: None.
-         * Assumptions: An HTML element with id "results" exists. If the game has not been run these values will all be undefined. */
-        function printResults() {
-            console.log(game.grid)
-            document.getElementById("results").innerHTML = `
-                    <table id="results-table" class="center-me" align="center">
-                        <tr>
-                            <th>Type</th>
-                            <th>Value</th>
-                        </tr>
-                        <tr>
-                            <td>Outcome</td>
-                            <td>` + (game.results.outcome === GAME_SUCCESS ? GAME_SUCCESS_MESSAGE : GAME_FAILURE_MESSAGE) + `</td>
-                        </tr>
-                        <tr>
-                            <td>Maximum Touches in a Cell</td>
-                            <td>` + game.results.maximumTouches + `</td>
-                        </tr>
-                        <tr>
-                            <td>Minimum Touches in a Cell</td>
-                            <td>` + game.results.minimumTouches + `</td>
-                        </tr>
-                        <tr>
-                            <td>Average Touches per Cell</td>
-                            <td>` + game.results.averageTouchesPerCell + `</td>
-                        </tr>
-                        <tr>
-                            <td>Total Touches</td>
-                            <td>` + game.results.totalTouches + `</td>
-                        </tr>
-                    </table>
-            `;
-        }
-
         function doExperiment() {
-            playNewGame().then(
-                () => {
-                    if (experiment.trials.length < 1000) {
-                        doExperiment();
+            while (experiment.trials.length < experiment.parameters.quantityTrials.notHyper) {
+                playNewGame(NOT_HYPER, experiment.parameters);
+            }
 
-                        let x = 0;
-                        experiment.trials.forEach(
-                            (trial) => {
-                                x += trial.dependentVariableValue;
-                            }
-                        );
+            while (experiment.trials.length - experiment.parameters.quantityTrials.notHyper < experiment.parameters.quantityTrials.hyper) {
+                playNewGame(HYPER, experiment.parameters);
+            }
 
-                        console.log(x);
-                        console.log(experiment.trials.length);
-                        console.log(x / experiment.trials.length);
-
-                        drawChart(x / experiment.trials.length, 0);
+            let totalTouchesAcrossAllNotHyperTrials = 0;
+            let totalTouchesAcrossAllHyperTrials = 0;
+            experiment.trials.forEach(
+                (trial) => {
+                    if (trial.independentVariableValue === "Not Hyper") {
+                        totalTouchesAcrossAllNotHyperTrials += trial.dependentVariableValue;
                     } else {
-                        //TODO
+                        totalTouchesAcrossAllHyperTrials += trial.dependentVariableValue;
                     }
                 }
             );
+
+            console.log(experiment.parameters.container);
+            drawChart(experiment.parameters.container, totalTouchesAcrossAllNotHyperTrials / experiment.parameters.quantityTrials.notHyper, totalTouchesAcrossAllHyperTrials / experiment.parameters.quantityTrials.hyper); //TODO
+        }
+
+        function runSingleExperiment(row, column) {
+            let numRows = row * 2 + 3;
+            let numCols = column * 2 + 3;
+
+            experiment = deepCopy(EMPTY_EXPERIMENT);
+
+            let quantityTrials = document.getElementById("quantity-trials").value;
+
+            experiment.parameters.quantityTrials.notHyper = quantityTrials;
+            experiment.parameters.quantityTrials.hyper = quantityTrials;
+
+            experiment.parameters.winningPositionIsAtBottomRightCorner = $("#winning-position-is-at-bottom-right-corner").is(":checked");
+
+            experiment.parameters.numRows = numRows;
+            experiment.parameters.numCols = numCols;
+
+            experiment.parameters.container = "row-" + row + "-col-" + column + "-graph";
+
+            doExperiment();
+        }
+
+        function runExperiments() {
+            for (let i = 0; i < 4; i++) {
+                for (let j = 0; j < 4; j++) {
+                    let numRows = i * 2 + 3;
+                    let numCols = j * 2 + 3;
+
+                    experiment = deepCopy(EMPTY_EXPERIMENT);
+
+                    let quantityTrials = document.getElementById("quantity-trials").value;
+
+                    experiment.parameters.quantityTrials.notHyper = quantityTrials;
+                    experiment.parameters.quantityTrials.hyper = quantityTrials;
+
+                    experiment.parameters.winningPositionIsAtBottomRightCorner = $("#winning-position-is-at-bottom-right-corner").is(":checked");
+
+                    experiment.parameters.numRows = numRows;
+                    experiment.parameters.numCols = numCols;
+
+                    experiment.parameters.container = "row-" + i + "-col-" + j + "-graph";
+
+                    doExperiment();
+                }
+            }
+        }
+
+        function loadExperimentCells() {
+            let output = ``;
+
+            for (let i = 0; i < 4; i++) {
+                output += `
+                    <div id="row-` + i + `" class="row">
+                `;
+
+                for (let j = 0; j < 4; j++) {
+                    output += `
+                        <div id="row-` + i + `-col-` + j + `" class="col-md-3">
+                            <div class="experiment-cell panel panel-default">
+                                <div class="panel-heading">
+                                    <b style="margin: 0; display: inline">` + (i * 2 + 3) + ` Rows, ` + (j * 2 + 3) + ` Columns</b><button style="float: right" class="btn btn-success btn-xs" onclick="runSingleExperiment(` + i + `, ` + j + `)">Run</button>
+                                </div>
+                                <div class="panel-body">
+                                    <div id="row-` + i + `-col-` + j + `-graph">Experiment not yet run.</div>
+                                    <div id="row-` + i + `-col-` + j + `-results"></div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                output += `
+                    </div>
+                `;
+            }
+
+            document.getElementById("experiment-wrapper").innerHTML = document.getElementById("experiment-wrapper").innerHTML + output;
         }
     </script>
 </head>
-<body>
-<div id="parameters-divider" class="divider">
-    <div id="parameters-wrapper" class="panel">
-        <h2 id="parameters-panel-title" class="panel-title">Parameters</h2>
-        <table id="parameters-table" class="center-me" align="center">
-            <tr>
-                <th>Parameter</th>
-                <th>Value</th>
-            </tr>
-            <tr>
-                <td>Hyper</td>
-                <td>
-                    <input id="hyper" class="parameter-input" type="checkbox"/>
-                </td>
-            </tr>
-            <tr>
-                <td>Speed</td>
-                <td>
-                    <input id="speed" class="parameter-input" type="number" min="1" value="250"/>
-                </td>
-            </tr>
-            <tr>
-                <td>Row Quantity</td>
-                <td>
-                    <input id="row-quantity" class="parameter-input" type="number" min="5" max="20" value="9"/>
-                </td>
-            </tr>
-            <tr>
-                <td>Column Quantity</td>
-                <td>
-                    <input id="column-quantity" class="parameter-input" type="number" min="5" max="20" value="9"/>
-                </td>
-            </tr>
-        </table>
-        <button id="play-new-game-button" class="center-me" onClick="playNewGame();">Play New Game</button>
-    </div>
-</div>
-
-<div id="game-divider" class="divider">
-    <div id="game-wrapper" class="panel">
-        <h2 id="game-panel-title" class="panel-title">Game</h2>
-        <div id="game-board-wrapper"></div>
-        <h3 id="last-move-description-subtitle" class="panel-subtitle">Last Move</h3>
-        <div id="last-move-description-wrapper">
-            <table id="last-move-description-table" class="center-me" align="center">
-                <tr>
-                    <th>Statistic</th>
-                    <th>Value</th>
-                </tr>
-                <tr>
-                    <td>Direction</td>
-                    <td>-</td>
-                </tr>
-                <tr>
-                    <td>Distance</td>
-                    <td>-</td>
-                </tr>
-                <tr>
-                    <td>Valid?</td>
-                    <td>-</td>
-                </tr>
-            </table>
+<body onload="loadExperimentCells();">
+<div class="container-fluid">
+    <div class="row">
+        <div id="content-wrapper" class="col-md-10 col-md-offset-1">
+            <div class="row">
+                <div class="col-md-10 col-md-offset-1">
+                    <h1 class="center-me">A Pretty Strange Game</h1>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="panel panel-default">
+                        <div class="panel-heading center-me">
+                            <h3 class="no-margin">Introduction</h3>
+                        </div>
+                        <div class="panel-body">
+                            Below is an interface for testing a series of experiments against the strange game I have been developing. The experiment I had in mind is to test whether making the plane "Hyper" or not has an affect on the average number of maximum touches that the marker creates. In
+                            this project I will be referring to "Hyper" as meaning that the plane that the marker resides in extends beyond the grid, in that if a marker chooses a move that would place it off the grid, it instead wraps around and lands back on the grid as if the grid were in the
+                            shape of a torus. To put it explicitly, the Independent Variable is whether the game's grid is Hyper or not, and the Dependent Variable is the average number of maximum touches the marker creates. But this isn't strictly true because I have added a few controls to allow
+                            varying of some other features. My motivation for doing this is that I wasn't satisfied with the results I was seeing so I wanted to expand my horizons to see if other factors could affect the degree to which my original experiment affected the game. So the true list of
+                            Independent Variables is: Whether the game is Hyper or not, the size of the grid, and the position of the winning tile. I added in the ability to change the position of the winning tile because the following situation occurred to me: If the marker starts in the top left
+                            corner, and the winning tile is the bottom right corner, and the grid is hyper, that means the marker could theoretically win in 2 moves (up 1, left 1) while the non-hyper marker would have a much longer time getting there. To fight this, I added the ability to move the
+                            winning tile to the center of the grid (hence why all the test grids are odd numbered in terms of row and column quantity). You can also vary the quantity of trials per experiment, though I wouldn't consider this an independent variable, this is more for quality of the
+                            experiment vs. time available to invest in the experiment. For optimal results that balance those two features, I suggest trying a quantity around 2500 (which leads to 40000 trials because there are 16 experiments). If you wish to run your configuration on one specific
+                            grid size, that grid has its own run button to test just that one. And please note: <p style="color: red; display: inline">these experiments can take awhile if you use many trials, please be patient if you surpass the recommended trial quantity</p>.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="panel panel-default">
+                        <div class="panel-heading center-me">
+                            <h3 class="no-margin">Experiments</h3>
+                        </div>
+                        <div class="panel-body" style="padding-bottom: 0;">
+                            <div class="row">
+                                <div class="col-md-12" style="margin-bottom: 20px;">
+                                    <form class="form-inline" style="display: inline;">
+                                        <label for="quantity-trials">Quantity Trials per Experiment</label>
+                                        <input id="quantity-trials" class="form-control" type="number" min="1" value="100"/>
+                                        Winning position is at:
+                                        <label for="winning-position-is-at-bottom-right-corner">bottom right corner</label>
+                                        <input id="winning-position-is-at-bottom-right-corner" type="radio" name="winning-position-is-at" value="bottom-right-corner" checked="checked"/>
+                                        <label for="winning-position-is-at-center">center</label>
+                                        <input id="winning-position-is-at-center" type="radio" name="winning-position-is-at" value="center"/>
+                                    </form>
+                                    <button class="btn btn-success" style="float: right" onclick="runExperiments(); return false;">Run All Experiments</button>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div id="experiment-wrapper" class="col-md-12"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
-
-<div id="results-divider" class="divider">
-    <div id="results-wrapper" class="panel">
-        <h2 id="results-panel-title" class="panel-title">Results</h2>
-        <div id="results">
-            <table id="results-table" class="center-me" align="center">
-                <tr>
-                    <th>Type</th>
-                    <th>Value</th>
-                </tr>
-                <tr>
-                    <td>Outcome</td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td>Maximum Touches in a Cell</td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td>Minimum Touches in a Cell</td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td>Average Touches per Cell</td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td>Total Touches</td>
-                    <td></td>
-                </tr>
-            </table>
-        </div>
-    </div>
-</div>
-
-<div id="graph"></div>
-<button onclick="drawChart()">drawChart</button>
-<button onclick="doExperiment()">Do Experiment</button>
 </body>
 </html>
