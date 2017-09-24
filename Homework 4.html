@@ -6,8 +6,13 @@
 <head>
     <title>A Pretty Strange Game</title>
 
+    <!--Bootstrap framework for CSS and grid system-->
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+    <!--Google Charts API-->
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
+    <!--JQuery-->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 
     <style>
@@ -25,14 +30,29 @@
     </style>
     <script>
         //Charles Justin Reusnow • 25 September 2017 • CMP SCI 4500 • Homework 4
-        //My partners are, TODO however we did not discuss Homework 2 and instead spent all our time on the "blobs" in-class assignment.
+        //My partners are, Peter Harris, Chris Jackson, and Kevin Maffitt. We helped each other for this assignment by first brainstorming ideas for what independent and dependent variables we could each use. After each of us had a fairly solid idea of what we
+        //wanted to do, we started discussing ways to implement our ideas. The biggest issue we had was trying to find a decent way to create a graph. A few of us knew of some APIs, I recommended Chart.js, and someone else said google charts is good as well.
 
         /* OPENING COMMENT.
-         * The following code is my attempt to develop a solution to the specification provided in "Homework 2". I wrote it with modularity and clarity in mind, I believe I succeeded in these efforts because I found when skimming through the
-         * code that I didn't need to put many clarification comments, for either the code was too short to be considered complex, or the code was named in such aa way that simply reading it led to an intuitive idea of what it was trying to do, though perhaps I am
+         * The following code is my attempt to develop a solution to the specification provided in "Homework 4". I wrote it with modularity and clarity in mind, I believe I succeeded in these efforts because I found when skimming through the
+         * code that I didn't need to put many clarification comments, for either the code was too short to be considered complex, or the code was named in such a way that simply reading it led to an intuitive idea of what it was trying to do, though perhaps I am
          * unintentionally biased because I wrote it, so I have a better internal understanding of it. Aside from these two efforts, I believe it more importantly does exactly what the specification is asking, and I asked for clarification on most things during class,
-         * though I do believe there were a few spots for ambiguity, and in these cases I stated what I thought to be the case under the "assumptions" section of the paragraph comment above the function containing the ambiguity. At about 700 lines of code, I believe I
-         * may have gone a bit over board with this introductory project, but I prefer to do things thoroughly when possible, and this was too good an opportunity. I hope you find that this code meets your expectations for this homework. */
+         * though I do believe there were a few spots for ambiguity, and in these cases I stated what I thought to be the case under the "assumptions" section of the paragraph comment above the function containing the ambiguity. */
+
+        /* THE EXPERIMENT.
+         * The purpose of this homework was to extend our previous homeworks to preform some experiment. We were instructed to determine some factor we want to change (the independent variable) and see how it affects some other factor (the dependent variable).
+         * For my experiment, I chose to go the route of testing whether or not the grid is "hyper" has an affect on the total touches the marker creates. "Hyper" in this experiment means that the grid's edges are shortcuts to each other, which means that if the marker
+         * jumps off the gird, instead of cancelling the move we simply put the marker on the other end of the grid, as if each of the edges were touching. Think of it like this: Take an ordinary grid, then roll one of the two sets of parallel edges up to each other
+         * so the grid now resembles a cylinder. Take this cylindrical grid and roll it into itself to form a torus. If done successfully, it is now impossible for the marker to ever jump off the grid, for the grid extends into itself from all angles. This is how the
+         * grid has been augmented for this assignment.
+         * There are some other changes as well though. I determined personally that having an independent variable domain (I) whose cardinality (|I|) is only 2 (I = {hyper, not hyper}, hence |I| = 2), is quite boring for experimenting, because there isn't much to vary.
+         * Because of this I added some additional controls to the interface to vary a few other things for more interesting experimenting. One inherent addition that cannot be changed (but it useful for getting more interesting results) is that this project
+         * doesn't do just one experiment, in fact it does 16. A grid of 4 x 4 experiments, each containing a differently shaped grid. Each row increases the number of rows in that experiments grid by 2, and each column increases the number of columns in that
+         * experiments grid by 2, starting at 3x3. The purpose of this is to determine if being hyper or not has a distinct advantage depending on the size/shape of the grid.
+         * A second control was added because of the following situation: On a regular 9x9 grid where the marker cannot make hyper jumps, starts in the top left corner, and must get to the bottom right corner, it is impossible to win in less than 8 moves. But for a
+         * hyper grid it is possible to win in 2 moves (up 1, left 1), because it can take advantage of the hyper jumps to minimze the amount of jumps requred. So to combat this, I added in a radio button selection to allow you to chose if the winning position should
+         * be in the bottom right corner (favors the hyper marker), or in the center of the grid (most fair position for both). In addition you can also vary the number of trials per experiment, but this doesn't affect the actual experiment, just the quality of the
+         * average value you get when the experiment concludes. */
 
         /* GLOBAL ASSUMPTIONS.
          * Any function which references the "game" variable, other than the function "resetGame", expects it to be defined as a global variable, and as a copy of "EMPTY_GAME" with varying levels of defined values.
@@ -46,47 +66,7 @@
 
         "use strict"; //Strict mode used for better debugging and coding standards.
 
-        google.charts.load('current', {'packages': ['corechart', 'bar']});
-
-        function drawChart(container, averageTotalTouchesForNotHyper, averageTotalTouchesForHyper) {
-            let data = new google.visualization.DataTable();
-
-            data.addColumn('string', 'Hyper or Not');
-            data.addColumn('number', 'Average Total Touches');
-
-            data.addRows(
-                [
-                    [
-                        "Not Hyper",
-                        averageTotalTouchesForNotHyper
-                    ],
-                    [
-                        "Hyper",
-                        averageTotalTouchesForHyper
-                    ]
-                ]
-            );
-
-            let options = {
-                height: 200,
-                legend: {
-                    position: "none"
-                }
-            };
-
-            new google.charts.Bar(document.getElementById(container)).draw(data, options);
-
-            let row = (experiment.parameters.numRows - 3) / 2;
-            let col = (experiment.parameters.numCols - 3) / 2;
-
-            console.log("row-" + row + "-col-" + col + "-results");
-
-            document.getElementById("row-" + row + "-col-" + col + "-results").innerHTML = `
-                <p>Average total touches for Non-Hyper grid: ` + averageTotalTouchesForNotHyper + `</p>
-                <p>Average total touches for Hyper grid: ` + averageTotalTouchesForHyper + `</p>
-                <p>The Hyper grid took ` + (averageTotalTouchesForHyper >= averageTotalTouchesForNotHyper ? "more or just as many" : "less") + ` total touches on average than the Non-Hyper grid.</p>
-            `;
-        }
+        google.charts.load('current', {'packages': ['corechart', 'bar']}); //Load in the google charts API.
 
         //CONSTANTS.
         //There are so many constants because these are the things I would put in a config file for easy tweaking of the parameters of the program.
@@ -145,8 +125,6 @@
 
         const MAXIMUM_TOUCHES_ALLOWED = 1000000;
 
-        const NOT_HYPER = false;
-        const HYPER = true;
 
         //ENUMS.
         //Direction Enum.
@@ -156,6 +134,10 @@
         const DIRECTION_DOWN = 3;
         const DIRECTIONS = [DIRECTION_LEFT, DIRECTION_UP, DIRECTION_RIGHT, DIRECTION_DOWN];
         const DIRECTION_QUANTITY = DIRECTIONS.length;
+
+        //IV Enum.
+        const NOT_HYPER = false;
+        const HYPER = true;
 
         //Distance Enum.
         const DISTANCE_ZERO = 0;
@@ -177,9 +159,11 @@
         resetGame();
 
         /* Purpose: Entry point to the rest of the logic of this game, it is triggered when the user clicks the "Play New Game" button.
-         * Inputs: None.
+         * Inputs:
+         * • "hyper" - A boolean for whether or not this grid is hyper.
+         * • "parameters" - An object containing details for setting up the game.
          * Output: None.
-         * Assumptions: None. */
+         * Assumptions: We are currently in an experiment. */
         function playNewGame(hyper, parameters) {
             resetGame();
             setupGame(hyper, parameters);
@@ -209,8 +193,9 @@
         }
 
         /* Purpose: Preforms initial setup of the game by creating the grid and placing the marker in the starting position.
-         * Inputs: None.
-         * Output: None.
+         * Inputs:
+         * • "hyper" - A boolean for whether or not this grid is hyper.
+         * • "parameters" - An object containing details for setting up the game.
          * Assumptions: The function "resetGame" was already called. */
         function setupGame(hyper, parameters) {
             game.parameters.hyper = hyper;
@@ -370,7 +355,7 @@
         /* Purpose: Determines whether the marker is in the winning row or not.
          * Inputs: None.
          * Output: A boolean indicating whether the marker is in the winning row or not.
-         * Assumptions: #A. */
+         * Assumptions: #A. The grid is odd numbered all around because otherwise there is no center cell. */
         function markerIsInWinningRow() {
             if (game.parameters.winningPositionIsAtBottomRightCorner) {
                 return game.marker.position.row === game.parameters.rowQuantity - 1;
@@ -394,7 +379,7 @@
         /* Purpose: Determines whether the game has surpassed the maximum amount of touches or not.
          * Inputs: None.
          * Output: A boolean indicating whether the game has surpassed the maximum amount of touches or not.
-         * Assumptions: #A. */
+         * Assumptions: #A. The grid is odd numbered all around because otherwise there is no center cell. */
         function gameIsBeyondMaximumTouches() {
             return game.touches >= MAXIMUM_TOUCHES_ALLOWED;
         }
@@ -510,7 +495,7 @@
 
         /* Purpose: Gets the position of the marker after the provided move is applied to it.
          * Inputs: "move" - The move object containing both a direction and a distance.
-         * Output: A position object containing a row and column fields which correspond to the position the marker would be in, should the provided move object be applied to it.
+         * Output: A position object containing a row and column field which correspond to the position the marker would be in, should the provided move object be applied to it.
          * Assumptions: #A. #B. Failure to adhere to assumption #B leads to the default case of the switch statement executing which leads to an error being thrown. */
         function getMarkerPositionAfterThisMove(move) {
             let markerPositionAfterThisMove = deepCopy(EMPTY_POSITION);
@@ -539,6 +524,10 @@
             return markerPositionAfterThisMove;
         }
 
+        /* Purpose: Gets the position of the marker after the provided hyper move is applied to it.
+         * Inputs: "move" - The move object containing both a direction and a distance.
+         * Outputs: A position object containing a row and column field which corresponds to the position the marker would be in, should the provided move be applied to it.
+         * Assumptions: #A. #B. Failure to adhere to assumption #B leads to the default case of the switch statement executing which leads to an error being thrown. */
         function getMarkerPositionAfterThisHyperMove(move) {
             let markerPositionAfterThisMove = deepCopy(EMPTY_POSITION);
 
@@ -548,14 +537,14 @@
                     if (game.marker.position.column - getMoveDistance(move) >= 0) {
                         markerPositionAfterThisMove.column = game.marker.position.column - getMoveDistance(move); //Subtract across the columns to go left.
                     } else {
-                        markerPositionAfterThisMove.column = game.parameters.columnQuantity - Math.abs(game.marker.position.column - getMoveDistance(move));
+                        markerPositionAfterThisMove.column = game.parameters.columnQuantity - Math.abs(game.marker.position.column - getMoveDistance(move)); //Calculate the hyper move.
                     }
                     break;
                 case DIRECTION_UP: //If the move direction is left...
                     if (game.marker.position.row - getMoveDistance(move) >= 0) {
                         markerPositionAfterThisMove.row = game.marker.position.row - getMoveDistance(move); //Subtract across the rows to go up.
                     } else {
-                        markerPositionAfterThisMove.row = game.parameters.rowQuantity - Math.abs(game.marker.position.row - getMoveDistance(move));
+                        markerPositionAfterThisMove.row = game.parameters.rowQuantity - Math.abs(game.marker.position.row - getMoveDistance(move)); //Calculate the hyper move.
                     }
                     markerPositionAfterThisMove.column = game.marker.position.column;
                     break;
@@ -564,19 +553,19 @@
                     if (game.marker.position.column + getMoveDistance(move) < game.parameters.columnQuantity) {
                         markerPositionAfterThisMove.column = game.marker.position.column + getMoveDistance(move); //Advance across the columns to go right.
                     } else {
-                        markerPositionAfterThisMove.column = game.marker.position.column + getMoveDistance(move) - game.parameters.columnQuantity;
+                        markerPositionAfterThisMove.column = game.marker.position.column + getMoveDistance(move) - game.parameters.columnQuantity; //Calculate the hyper move.
                     }
                     break;
                 case DIRECTION_DOWN: //If the move direction is right...
                     if (game.marker.position.row + getMoveDistance(move) < game.parameters.rowQuantity) {
                         markerPositionAfterThisMove.row = game.marker.position.row + getMoveDistance(move); //Advance across the rows to go down.
                     } else {
-                        markerPositionAfterThisMove.row = game.marker.position.row + getMoveDistance(move) - game.parameters.rowQuantity;
+                        markerPositionAfterThisMove.row = game.marker.position.row + getMoveDistance(move) - game.parameters.rowQuantity; //Calculate the hyper move.
                     }
                     markerPositionAfterThisMove.column = game.marker.position.column;
                     break;
                 default:
-                    throw new Error("Unrecognized move direction encountered: \"" + move.direction + "\".");
+                    throw new Error("Unrecognized hyper move direction encountered: \"" + move.direction + "\".");
             }
 
             return markerPositionAfterThisMove;
@@ -615,6 +604,10 @@
             placeMarkerAndRecordTouchAt(newMarkerPosition.row, newMarkerPosition.column);
         }
 
+        /* Purpose: Puts the marker at its new position after the provided hyper move is applied to it.
+         * Inputs: "move" - The move object containing both a direction and a distance.
+         * Output: None.
+         * Assumptions: #B. The function "getMarkerPositionAfterThisHyperMove" returns a valid position object, resembling the object described in #C. */
         function placeMarkerAtHyperPositionFromMove(move) {
             let newMarkerPosition = getMarkerPositionAfterThisHyperMove(move);
             placeMarkerAndRecordTouchAt(newMarkerPosition.row, newMarkerPosition.column);
@@ -761,6 +754,10 @@
             game.results.totalTouches = game.touches;
         }
 
+        /* Purpose: Executes the currently loaded experiment.
+         * Inputs: None.
+         * Output: None.
+         * Assumptions: We already loaded an experiment. */
         function doExperiment() {
             while (experiment.trials.length < experiment.parameters.quantityTrials.notHyper) {
                 playNewGame(NOT_HYPER, experiment.parameters);
@@ -782,31 +779,16 @@
                 }
             );
 
-            console.log(experiment.parameters.container);
-            drawChart(experiment.parameters.container, totalTouchesAcrossAllNotHyperTrials / experiment.parameters.quantityTrials.notHyper, totalTouchesAcrossAllHyperTrials / experiment.parameters.quantityTrials.hyper); //TODO
+            let averageTouchesForNotHyper = totalTouchesAcrossAllNotHyperTrials / experiment.parameters.quantityTrials.notHyper;
+            let averageTouchesForHyper = totalTouchesAcrossAllHyperTrials / experiment.parameters.quantityTrials.hyper;
+
+            drawChart(experiment.parameters.container, averageTouchesForNotHyper, averageTouchesForHyper);
         }
 
-        function runSingleExperiment(row, column) {
-            let numRows = row * 2 + 3;
-            let numCols = column * 2 + 3;
-
-            experiment = deepCopy(EMPTY_EXPERIMENT);
-
-            let quantityTrials = document.getElementById("quantity-trials").value;
-
-            experiment.parameters.quantityTrials.notHyper = quantityTrials;
-            experiment.parameters.quantityTrials.hyper = quantityTrials;
-
-            experiment.parameters.winningPositionIsAtBottomRightCorner = $("#winning-position-is-at-bottom-right-corner").is(":checked");
-
-            experiment.parameters.numRows = numRows;
-            experiment.parameters.numCols = numCols;
-
-            experiment.parameters.container = "row-" + row + "-col-" + column + "-graph";
-
-            doExperiment();
-        }
-
+        /* Purpose: Sets up and executes all 16 experiments.
+         * Inputs: None.
+         * Output: None.
+         * Assumptions: None. */
         function runExperiments() {
             for (let i = 0; i < 4; i++) {
                 for (let j = 0; j < 4; j++) {
@@ -832,6 +814,39 @@
             }
         }
 
+
+        /* Purpose: Sets up and runs a single experiment, chosen by the user.
+         * Inputs:
+         * • "row" - An index representing which row of experiments were selected from the interface.
+         * • "column" - An index representing which column of experiments were selected from the interface. Used in tandem with the row index, we can pinpoint which experiment was selected.
+         * Output: None.
+         * Assumptions: The value entered for quantity trials is a valid integer. */
+        function runSingleExperiment(row, column) {
+            let numRows = row * 2 + 3;
+            let numCols = column * 2 + 3;
+
+            experiment = deepCopy(EMPTY_EXPERIMENT);
+
+            let quantityTrials = document.getElementById("quantity-trials").value;
+
+            experiment.parameters.quantityTrials.notHyper = quantityTrials;
+            experiment.parameters.quantityTrials.hyper = quantityTrials;
+
+            experiment.parameters.winningPositionIsAtBottomRightCorner = $("#winning-position-is-at-bottom-right-corner").is(":checked");
+
+            experiment.parameters.numRows = numRows;
+            experiment.parameters.numCols = numCols;
+
+            experiment.parameters.container = "row-" + row + "-col-" + column + "-graph";
+
+            doExperiment();
+        }
+
+
+        /* Purpose: Programmatically erects the grid structure and divs for each of the experiments, their charts, and their results.
+         * Inputs: None.
+         * Output: None.
+         * Assumptions: An element with id "experiment-wrapper" exists. */
         function loadExperimentCells() {
             let output = ``;
 
@@ -862,6 +877,52 @@
             }
 
             document.getElementById("experiment-wrapper").innerHTML = document.getElementById("experiment-wrapper").innerHTML + output;
+        }
+
+
+        /* Purpose: Draws or redraws the chart for the provided experiment (in "container") to display the provided data.
+         * Inputs:
+         * • "container" - The id of the containing element for this experiment (where to draw the graph at).
+         * • "averageTotalTouchesForNotHyper" - The average total touches encountered for this experiment's regular grid trials.
+         * • "averageTotalTouchesForHyper" - The average total touches encountered for this experiment's hyper-grid trials.
+         * Output: None.
+         * Assumptions: An element containing the id held in the string "container" exists. The google charts API is already loaded (happens at the very beginning of this program). */
+        function drawChart(container, averageTotalTouchesForNotHyper, averageTotalTouchesForHyper) {
+            let data = new google.visualization.DataTable();
+
+            data.addColumn('string', 'Hyper or Not');
+            data.addColumn('number', 'Average Total Touches');
+
+            data.addRows(
+                [
+                    [
+                        "Not Hyper",
+                        averageTotalTouchesForNotHyper
+                    ],
+                    [
+                        "Hyper",
+                        averageTotalTouchesForHyper
+                    ]
+                ]
+            );
+
+            let options = {
+                height: 200,
+                legend: {
+                    position: "none"
+                }
+            };
+
+            new google.charts.Bar(document.getElementById(container)).draw(data, options);
+
+            let row = (experiment.parameters.numRows - 3) / 2;
+            let col = (experiment.parameters.numCols - 3) / 2;
+
+            document.getElementById("row-" + row + "-col-" + col + "-results").innerHTML = `
+                <p>Average total touches for Non-Hyper grid: ` + averageTotalTouchesForNotHyper + `</p>
+                <p>Average total touches for Hyper grid: ` + averageTotalTouchesForHyper + `</p>
+                <p>The Hyper grid took ` + (averageTotalTouchesForHyper >= averageTotalTouchesForNotHyper ? "more or just as many" : "less") + ` total touches on average than the Non-Hyper grid.</p>
+            `;
         }
     </script>
 </head>
@@ -905,7 +966,7 @@
                                 <div class="col-md-12" style="margin-bottom: 20px;">
                                     <form class="form-inline" style="display: inline;">
                                         <label for="quantity-trials">Quantity Trials per Experiment</label>
-                                        <input id="quantity-trials" class="form-control" type="number" min="1" value="100"/>
+                                        <input id="quantity-trials" class="form-control" type="number" min="1" value="2500"/>
                                         Winning position is at:
                                         <label for="winning-position-is-at-bottom-right-corner">bottom right corner</label>
                                         <input id="winning-position-is-at-bottom-right-corner" type="radio" name="winning-position-is-at" value="bottom-right-corner" checked="checked"/>
@@ -916,6 +977,7 @@
                                 </div>
                             </div>
                             <div class="row">
+                                <!--The below is where all of the experiments will be placed. They are loaded in programmatically because typing out all of those is tedious and unnecessary-->
                                 <div id="experiment-wrapper" class="col-md-12"></div>
                             </div>
                         </div>
